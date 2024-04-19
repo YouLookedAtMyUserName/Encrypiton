@@ -1,0 +1,114 @@
+/**
+
+	How to use:
+    	To encrypt a message type 1
+        	Type a message
+            add a key(REMEMBER THE KEY. IT IS THE LITERAL KEY)
+            copy the binary and give the binary and they key to whoever your giving it to
+		To decrypt a message type 2
+        	Paste the binary a friend or foe has given you
+            Type in the key that the one who gave you the binary told you
+            Look at your message.
+   Limitations:
+   		EVERYTHING IS CASE SENSITIVE
+        THE BINARY AND THE KEY IS WHITE SPACE SENSITIVE
+        MAX 32 CHARACTERS
+   CREDITS:
+   		YOULOOKEDATMYUSERNAME and a Friend
+   TEST:
+        Run the program and select decrpyt(2)
+        after when it asks you for the binary copy/paste
+        000110100011110100100110001101100111010000011110001010100011000101110101
+        After when it asks you the key type in: TEST
+**/
+
+void setup()
+{
+  Serial.begin(9600); //Begins the serial
+}
+
+String ToBinary(String Message) {
+  String NewMessage = ""; //Binary Output
+  for (int i = 0; i < Message.length(); i++) {
+    int Char = (int)Message.charAt(i); //Gets the char number
+    String CharString = String(Char, BIN); //Binary
+    while (CharString.length() < 8) { //Makes everything 8 bits
+      CharString = "0"+CharString;
+    }
+    NewMessage = NewMessage + CharString;
+  }
+  return NewMessage;
+}
+
+String DecrpytOrEncrypt(String Message/**Binary**/, String Key/**Not Binary**/) { //String XOR
+  String BinaryKey = ToBinary(Key); //Turns the key to binary
+  while (BinaryKey.length() < Message.length()) { //Makes the key = the length on the binary for more encryption
+    BinaryKey = BinaryKey + BinaryKey; //Makes the string longer
+  }
+  while (BinaryKey.length() > Message.length()) {
+    BinaryKey = BinaryKey.substring(1, BinaryKey.length() + 1); //Makes the string shorter
+  }
+  String Return = "";
+  for (int i = 0; i < Message.length(); i++) { //XOR takes action!
+   int Num = 0;
+    if (Message.charAt(i) == '1') {
+      Num += 1; //Adds 1 if 1 is the char at i in Message
+    }
+    if (BinaryKey.charAt(i) == '1') {
+      Num += 1; //Adds 1 if 1 is the char at i in The Key
+    }
+    Return = Return + (String)(Num%2); // 0 = 0, 1 = 1, 2 = 0
+  }
+  return Return;
+}
+
+String Covert(String bin) { //Converts from binary
+  int Bits = 8;
+  String Return = "";
+  while (bin != "") { //While there is still some bits left
+    String Bits2CookWith = bin.substring(0, Bits); //Gets 8 bits
+    int CharNum = 0; //Num ID of the char
+    for (int i = 0; i<Bits2CookWith.length(); i++) {
+      CharNum <<= 1; //Adds a 0 to the end of the binary
+      if (Bits2CookWith.charAt(i) == '1') {
+        CharNum += 1; //turns the 0 at the end of the binary into a 1
+      }
+    }
+    char Char = CharNum;
+    Return = Return + (String)Char; //Adds the character to the string
+    bin = bin.substring(8, bin.length()); //Removes what was used
+  }
+  return Return;
+}
+
+void loop()
+{
+  Serial.println("Choose a function");
+  Serial.println("Encrypt: 1");
+  Serial.println("Decrypt: 2");
+  while(Serial.available() == 0) {} //Waits for a response
+  int Result = Serial.parseInt();
+  if (Result == 1) {//Encrypt
+    Serial.println("What's your message?");
+    while(Serial.available() == 0) {}
+    String Message = Serial.readString();
+    if (Message.length() <= 32) { //Checks if the message will exceed the maximum character limit  
+      Serial.println("What's your key?");
+      while(Serial.available() == 0) {}
+      String Key = Serial.readString();
+      Serial.println(DecrpytOrEncrypt(ToBinary(Message), Key));
+    }else{
+      Serial.println("This exceeds the max length of 32 by " + (String)(Message.length() - 32) + " Characters");
+    }
+  }else if(Result == 2){//Decrypt
+    Serial.println("What's your binary?");
+    while(Serial.available() == 0) {}
+    String Binary = Serial.readString();
+    Serial.println("What's your key?");
+    while(Serial.available() == 0) {}
+    String Key = Serial.readString();
+    Serial.println(Covert(DecrpytOrEncrypt(Binary, Key)));
+  }else{//N/A or not an option
+ 	Serial.println("That's not an option. Lets try that again...");
+  }
+}
